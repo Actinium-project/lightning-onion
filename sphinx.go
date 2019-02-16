@@ -9,10 +9,10 @@ import (
 	"io"
 	"math/big"
 
+	"github.com/Actinium-project/acmd/btcec"
+	"github.com/Actinium-project/acmd/chaincfg"
+	"github.com/Actinium-project/acmutil"
 	"github.com/aead/chacha20"
-	"github.com/btcsuite/btcd/btcec"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcutil"
 )
 
 const (
@@ -621,7 +621,7 @@ type ProcessedPacket struct {
 // the onion encryption which the packet is wrapped with.
 type Router struct {
 	nodeID   [addressSize]byte
-	nodeAddr *btcutil.AddressPubKeyHash
+	nodeAddr *acmutil.AddressPubKeyHash
 
 	onionKey *btcec.PrivateKey
 
@@ -633,10 +633,10 @@ type Router struct {
 func NewRouter(nodeKey *btcec.PrivateKey, net *chaincfg.Params, log ReplayLog,
 ) *Router {
 	var nodeID [addressSize]byte
-	copy(nodeID[:], btcutil.Hash160(nodeKey.PubKey().SerializeCompressed()))
+	copy(nodeID[:], acmutil.Hash160(nodeKey.PubKey().SerializeCompressed()))
 
 	// Safe to ignore the error here, nodeID is 20 bytes.
-	nodeAddr, _ := btcutil.NewAddressPubKeyHash(nodeID[:], net)
+	nodeAddr, _ := acmutil.NewAddressPubKeyHash(nodeID[:], net)
 
 	return &Router{
 		nodeID:   nodeID,

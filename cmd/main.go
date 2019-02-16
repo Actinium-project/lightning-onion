@@ -9,9 +9,9 @@ import (
 	"os"
 	"strings"
 
-	sphinx "github.com/lightningnetwork/lightning-onion"
-	"github.com/btcsuite/btcd/btcec"
-	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/Actinium-project/acmd/btcec"
+	"github.com/Actinium-project/acmd/chaincfg"
+	sphinx "github.com/Actinium-project/lightning-onion"
 )
 
 // main implements a simple command line utility that can be used in order to
@@ -79,7 +79,7 @@ func main() {
 		}
 
 		privkey, _ := btcec.PrivKeyFromBytes(btcec.S256(), binKey)
-		s := sphinx.NewRouter(privkey, &chaincfg.TestNet3Params,
+		s := sphinx.NewRouter(privkey, &chaincfg.TestNet4Params,
 			sphinx.NewMemoryReplayLog())
 
 		var packet sphinx.OnionPacket
