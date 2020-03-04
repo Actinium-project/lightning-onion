@@ -2,6 +2,7 @@ package sphinx
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/hex"
 	"reflect"
 	"testing"
@@ -28,7 +29,7 @@ func TestOnionFailure(t *testing.T) {
 	// able to receive the error not only from last hop.
 	errorPath := paymentPath[:len(paymentPath)-1]
 
-	failureData := []byte("some kek-error data")
+	failureData := bytes.Repeat([]byte{'A'}, onionErrorLength-sha256.Size)
 	sharedSecrets := generateSharedSecrets(paymentPath, sessionKey)
 
 	// Emulate creation of the obfuscator on node where error have occurred.
@@ -58,22 +59,27 @@ func TestOnionFailure(t *testing.T) {
 
 	// Emulate that sender node receive the failure message and trying to
 	// unwrap it, by applying obfuscation and checking the hmac.
-	pubKey, deobfuscatedData, err := deobfuscator.DecryptError(obfuscatedData)
+	decryptedError, err := deobfuscator.DecryptError(obfuscatedData)
 	if err != nil {
 		t.Fatalf("unable to de-obfuscate the onion failure: %v", err)
 	}
 
 	// We should understand the node from which error have been received.
-	if !bytes.Equal(pubKey.SerializeCompressed(),
+	if !bytes.Equal(decryptedError.Sender.SerializeCompressed(),
 		errorPath[len(errorPath)-1].SerializeCompressed()) {
 		t.Fatalf("unable to properly conclude from which node in " +
 			"the path we received an error")
 	}
 
+	if decryptedError.SenderIdx != len(errorPath) {
+		t.Fatalf("unable to properly conclude from which node in " +
+			"the path we received an error")
+	}
+
 	// Check that message have been properly de-obfuscated.
-	if !bytes.Equal(deobfuscatedData, failureData) {
+	if !bytes.Equal(decryptedError.Message, failureData) {
 		t.Fatalf("data not equals, expected: \"%v\", real: \"%v\"",
-			string(failureData), string(deobfuscatedData))
+			string(failureData), string(decryptedError.Message))
 	}
 }
 
@@ -254,20 +260,25 @@ func TestOnionFailureSpecVector(t *testing.T) {
 
 	// Emulate that sender node receives the failure message and trying to
 	// unwrap it, by applying obfuscation and checking the hmac.
-	pubKey, deobfuscatedData, err := deobfuscator.DecryptError(obfuscatedData)
+	decryptedError, err := deobfuscator.DecryptError(obfuscatedData)
 	if err != nil {
 		t.Fatalf("unable to de-obfuscate the onion failure: %v", err)
 	}
 
 	// Check that message have been properly de-obfuscated.
-	if !bytes.Equal(deobfuscatedData, failureData) {
+	if !bytes.Equal(decryptedError.Message, failureData) {
 		t.Fatalf("data not equals, expected: \"%v\", real: \"%v\"",
-			string(failureData), string(deobfuscatedData))
+			string(failureData), string(decryptedError.Message))
 	}
 
 	// We should understand the node from which error have been received.
-	if !bytes.Equal(pubKey.SerializeCompressed(),
+	if !bytes.Equal(decryptedError.Sender.SerializeCompressed(),
 		paymentPath[len(paymentPath)-1].SerializeCompressed()) {
+		t.Fatalf("unable to properly conclude from which node in " +
+			"the path we received an error")
+	}
+
+	if decryptedError.SenderIdx != len(paymentPath) {
 		t.Fatalf("unable to properly conclude from which node in " +
 			"the path we received an error")
 	}
