@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/Actinum-project/acmd/btcec"
-	"github.com/Actinum-project/acmd/wire"
+	"github.com/Actinium-project/acmd/btcec"
+	"github.com/Actinium-project/acmd/wire"
 )
 
 // HopData is the information destined for individual hops. It is a fixed size
